@@ -16,7 +16,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # fetch-depth를 0으로 변경하여 전체 히스토리를 가져옵니다.
+          # ✅ fetch-depth를 0으로 변경하여 Git 전체 기록을 가져옵니다.
+          fetch-depth: 0
 
       - name: Move LeetCode solutions
         run: |
@@ -24,24 +25,24 @@ jobs:
           mkdir -p $TARGET_FOLDER
           
           found=0
-          # LeetHub v2는 문제 이름으로 폴더를 생성합니다.
+          # LeetHub는 문제 이름으로 폴더를 생성합니다.
           for d in [0-9][0-9][0-9][0-9]-*; do
             if [ -d "$d" ]; then
               echo "Moving directory: $d to $TARGET_FOLDER/"
-              # git mv를 사용해 Git이 파일 이동을 추적하도록 합니다.
+              # git mv를 사용해 Git이 파일 이동을 명시적으로 추적하도록 합니다.
               git mv "$d" "$TARGET_FOLDER/" && found=1
             fi
           done
           
           if [ $found -eq 0 ]; then
-            echo "No matching directories found to move."
-            # 이동할 파일이 없으면 작업을 성공으로 간주하고 종료
+            echo "No matching directories to move."
+            # 이동할 파일이 없으면 작업을 성공으로 간주하고 종료합니다.
             exit 0
           fi
 
       - name: Commit & Push changes
         run: |
-          # git diff --cached를 사용하여 스테이징된 변경사항만 확인
+          # git diff --cached를 사용해 스테이징된 변경사항이 있는지 확인합니다.
           if git diff --quiet --cached; then
             echo "No changes to commit."
             exit 0
@@ -50,10 +51,9 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
-          # 커밋 메시지를 더 명확하게 수정
           git commit -m "chore: 📂 Organize LeetCode solution into $TARGET_FOLDER"
           
-          # ✅ 푸시 전 최신 변경사항을 rebase 방식으로 pull
+          # 푸시 전 최신 변경사항을 rebase 방식으로 pull합니다.
           git pull --rebase
           
           git push
