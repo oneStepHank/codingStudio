@@ -6,23 +6,24 @@ on:
     paths:
       - '[0-9][0-9][0-9][0-9]-*/**'
 
+# 🔐 이 부분을 추가해 주세요!
+permissions:
+  contents: write
+
 jobs:
   move-files:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # ⬅️ v3를 v4로 수정했습니다.
+        uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
       - name: Move LeetCode solutions
         run: |
-          # LeetCode 폴더가 없다면 생성
-          # ❗️만약 다른 폴더 이름을 원하시면 "LeetCode" 부분을 수정하세요.
           TARGET_FOLDER="LeetCode"
           mkdir -p $TARGET_FOLDER
           
-          # LeetHub가 생성한 폴더들을 대상 폴더로 이동
           found=0
           for d in [0-9][0-9][0-9][0-9]-*; do
             if [ -d "$d" ]; then
@@ -37,7 +38,6 @@ jobs:
 
       - name: Commit & Push changes
         run: |
-          # 변경사항이 있는지 확인 후 커밋 및 푸시
           if git status --porcelain | grep .; then
             git config --global user.name 'github-actions[bot]'
             git config --global user.email 'github-actions[bot]@users.noreply.github.com'
