@@ -6,7 +6,6 @@ on:
     paths:
       - '[0-9][0-9][0-9][0-9]-*/**'
 
-# 🔐 이 부분을 추가해 주세요!
 permissions:
   contents: write
 
@@ -17,7 +16,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 2 # fetch-depth를 0으로 변경하여 전체 히스토리를 가져옵니다.
 
       - name: Move LeetCode solutions
         run: |
@@ -25,25 +24,36 @@ jobs:
           mkdir -p $TARGET_FOLDER
           
           found=0
+          # LeetHub v2는 문제 이름으로 폴더를 생성합니다.
           for d in [0-9][0-9][0-9][0-9]-*; do
             if [ -d "$d" ]; then
               echo "Moving directory: $d to $TARGET_FOLDER/"
-              mv "$d" "$TARGET_FOLDER/" && found=1
+              # git mv를 사용해 Git이 파일 이동을 추적하도록 합니다.
+              git mv "$d" "$TARGET_FOLDER/" && found=1
             fi
           done
           
           if [ $found -eq 0 ]; then
             echo "No matching directories found to move."
+            # 이동할 파일이 없으면 작업을 성공으로 간주하고 종료
+            exit 0
           fi
 
       - name: Commit & Push changes
         run: |
-          if git status --porcelain | grep .; then
-            git config --global user.name 'github-actions[bot]'
-            git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-            git add -A
-            git commit -m "chore: 📂 Move LeetCode solutions to $TARGET_FOLDER folder"
-            git push
-          else
+          # git diff --cached를 사용하여 스테이징된 변경사항만 확인
+          if git diff --quiet --cached; then
             echo "No changes to commit."
+            exit 0
           fi
+          
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # 커밋 메시지를 더 명확하게 수정
+          git commit -m "chore: 📂 Organize LeetCode solution into $TARGET_FOLDER"
+          
+          # ✅ 푸시 전 최신 변경사항을 rebase 방식으로 pull
+          git pull --rebase
+          
+          git push
